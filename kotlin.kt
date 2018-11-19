@@ -1,11 +1,12 @@
 import java.io.File
-import java.util.HashMap
 
 fun main(args: Array<String>) {
 
     File("in").listFiles().forEach {
+        val startTime = System.currentTimeMillis()
+
         val inputFilename = it.toString()
-        println(inputFilename)
+        println("---")
         val inputFileData = File(inputFilename).useLines { it.toList() }
 
         val stringLength: Long = inputFileData[0].toLong()
@@ -16,8 +17,6 @@ fun main(args: Array<String>) {
         var positionsMap = hashMapOf<Long, Long>()
 
         var steps: Long = 0
-        var i: Long = 0
-        var lastChar: Long = 0
 
         for (i in 0..stringLength-1) {
             var intI = i.toInt()
@@ -34,13 +33,12 @@ fun main(args: Array<String>) {
         }
 
         var char: Char = 'A'
-
-
         while (char <= 'Z') {
             var chars1PositionsList = chars1Positions.get(char.toLong())
             var chars2PositionsList = chars2Positions.get(char.toLong())
 
             if (chars1PositionsList == null || chars2PositionsList == null) {
+                char++
                 continue;
             }
 
@@ -50,15 +48,48 @@ fun main(args: Array<String>) {
             char++
         }
 
-        println(inputFilename.replace("in", "out"))
+        var zeroCount: Int = 0
+        var oddPositions = hashMapOf<Long, Long>()
+
+        while (zeroCount < stringLength) {
+            for (i in 0..stringLength) {
+                oddPositions.put(i, 0.toLong())
+            }
+            zeroCount = 0
+            for (i in 0 until stringLength) {
+                var position = positionsMap[i]
+
+                if (position == null) {
+                    return;
+                }
+
+                var nextOddPosition = oddPositions.get(position + 1)
+                var oddValue = oddPositions.get(position)
+                if (oddValue == null || nextOddPosition == null) {
+                    return;
+                }
+                if (position % 2 == 0.toLong()) {
+                    steps += nextOddPosition
+                } else {
+                    oddPositions.put(position, oddValue+1)
+                }
+                positionsMap.put(i, position/2)
+                if (position == 0.toLong()) {
+                    ++zeroCount
+                }
+            }
+        }
+
+        val endTime = System.currentTimeMillis()
         val outputFileData = File(inputFilename.replace("in", "out")).useLines { it.toList() }
-        println(outputFileData[0])
         val outputSteps = outputFileData[0].toLong()
 
-        if (steps == outputSteps) {
+        // 20 seconds limit
+        if (steps == outputSteps && (endTime-startTime)/1000 < 20) {
             println(inputFilename + " test passed! " + steps + " steps")
         } else {
             println(inputFilename + " test broken! actual: " + steps + " steps but expected: " + outputSteps + " steps")
+            return;
         }
     }
 }
